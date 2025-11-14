@@ -10,7 +10,7 @@ import backoff
 
 
 openai.api_key = "PLEASE USE YOUR OWN API KEY"
-MODEL = "gpt-4"
+MODEL = "gpt-4o-mini"
 
 @backoff.on_exception(backoff.expo, (openai.error.RateLimitError, openai.error.Timeout, openai.error.APIError))
 def predict(prompt, temperature):
