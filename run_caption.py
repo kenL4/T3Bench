@@ -18,7 +18,7 @@ MODEL = "gpt-4o-mini"
 
 @backoff.on_exception(backoff.expo, (openai.error.RateLimitError, openai.error.Timeout, openai.error.APIError))
 def predict(prompt, temperature):
-    message = openai.ChatCompletion.create(
+    message = openai.chat.completions.create(
         model = MODEL,
         temperature = temperature,
         messages = [
