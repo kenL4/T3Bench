@@ -12,18 +12,30 @@ import backoff
 openai.api_key = "PLEASE USE YOUR OWN API KEY"
 MODEL = "gpt-4o-mini"
 
-@backoff.on_exception(backoff.expo, (openai.error.RateLimitError, openai.error.Timeout, openai.error.APIError))
-def predict(prompt, temperature):
-    message = openai.chat.completions.create(
-        model = MODEL,
-        temperature = temperature,
-        messages = [
-                # {"role": "system", "content": prompt}
-                {"role": "user", "content": prompt}
-            ]
-    )
-    # print(message)
-    return message["choices"][0]["message"]["content"]
+def predict(prompt, temperature, max_retries=10):
+    import time
+    for i in range(max_retries):
+        try:
+            response = openai.chat.completions.create(
+                model=MODEL,
+                temperature=temperature,
+                messages=[
+                    {"role": "user", "content": prompt}
+                ]
+            )
+            return response.choices[0].message["content"]
+
+        except openai.RateLimitError as e:
+            # Exponential backoff
+            wait = 2 ** i
+            print(f"Rate limit hit. Waiting {wait} seconds...")
+            time.sleep(wait)
+
+        except Exception as e:
+            # Other errors → don't retry
+            raise e
+
+    raise RuntimeError("Failed after maximum retries.")
 
 
 def process_text(text):
