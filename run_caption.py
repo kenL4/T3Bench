@@ -16,9 +16,9 @@ from lavis.models import load_model_and_preprocess
 openai.api_key = "PLEASE USE YOUR OWN API KEY"
 MODEL = "gpt-4o-mini"
 
-def predict(prompt, temperature):
+def predict(prompt, temperature, max_retries=10):
     import time
-    for i in range(5):
+    for i in range(max_retries):
         try:
             response = openai.chat.completions.create(
                 model=MODEL,
