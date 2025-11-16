@@ -27,7 +27,7 @@ def predict(prompt, temperature, max_retries=10):
                     {"role": "user", "content": prompt}
                 ]
             )
-            return response["choices"][0]["message"]["content"]
+            return response.choices[0].message.content
 
         except openai.RateLimitError as e:
             # Exponential backoff
