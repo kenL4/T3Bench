@@ -71,7 +71,7 @@ def run(args, temp_path):
             if not ret: break
 
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)[:, :512]
-            color = Image.fromarray(frame_rgb).convert("RGB")
+            color = Image.fromarray(frame_rgb).convert("L")
             image = vis_processors["eval"](color).unsqueeze(0).to(device)
             x = model.generate({"image": image}, use_nucleus_sampling=True, num_captions=1)
             texts += x
