@@ -4,13 +4,13 @@ import argparse
 
 import ImageReward as RM
 import trimesh
+import cv2
 from PIL import Image
 
 
 def run(args, temp_path):
     Radius = 2.2
     model = RM.load("ImageReward-v1.0")
-    icosphere = trimesh.creation.icosphere(subdivisions=2, radius=Radius)
 
     with open(f'data/prompt_{args.group}.txt') as f:
         lines = f.readlines()
@@ -21,30 +21,40 @@ def run(args, temp_path):
     for prompt in lines:
         prompt = prompt.strip()
         try:
-            obj_path = glob.glob(f'outputs_mesh_t3/{args.method}_{args.group}/{prompt.replace(" ", "_")}*/save/it*-export/model.obj')[-1].replace("\'", "\\\'")
+            obj_path = glob.glob(f'outputs_video/{args.method}_{args.group}/{prompt.replace(" ", "_")}/eval.mp4')[-1].replace("\'", "\\\'")
         except IndexError:
-            obj_path = 'outputs_mesh_t3/FALSE_PATH'
-        
-        os.system(f'python render/meshrender.py --path {obj_path} --name {temp_path}')
+            obj_path = 'outputs_video/FALSE_PATH'
+        cap = cv2.VideoCapture(obj_path)
 
-        scores = { i: -114514 for i in range(len(icosphere.vertices)) }
+        frame_id = 0
+        scores = {}
+        while True:
+            ret, frame = cap.read()
+            if not ret: break
 
-        for idx in range(len(icosphere.vertices)):
-            for j in range(5):
-                img_path = f'{idx:03d}_{j}.png'
-                # convert color to PIL image
-                color = Image.open(os.path.join(temp_path, img_path))
-                reward = model.score(prompt, color)
-                scores[idx] = max(scores[idx], reward)
+            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)[:, :512]
+            color = Image.fromarray(frame_rgb)
+            reward = model.score(prompt, color)
+            # For some reason, T3Bench uses -114514 as the default
+            scores[frame_id] = max(-114514, reward)
+            frame_id += 1
+        cap.release()
 
-        # convolute scores on the icosphere for 3 times
-        for _ in range(3):
+        # Unlike the original T3Bench, we now use frame neighbours
+        radius = 1
+        frame_ids = sorted(scores.keys())
+        for _ in range(3):  # same 3-iteration smoothing
             new_scores = {}
-            for idx, v in enumerate(icosphere.vertices):
-                new_scores[idx] = scores[idx]
-                for n in icosphere.vertex_neighbors[idx]:
-                    new_scores[idx] += scores[n]
-                new_scores[idx] /= (len(icosphere.vertex_neighbors[idx]) + 1)
+            for i in frame_ids:
+                neighbors = [scores[i]]
+
+                # Convolve over frame neighbors within radius
+                for r in range(1, radius + 1):
+                    if i - r in scores:
+                        neighbors.append(scores[i - r])
+                    if i + r in scores:
+                        neighbors.append(scores[i + r])
+                new_scores[i] = sum(neighbors) / len(neighbors)
             scores = new_scores
 
         for idx in sorted(scores, key=lambda x: scores[x], reverse=True)[:1]:

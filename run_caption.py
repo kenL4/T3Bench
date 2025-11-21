@@ -6,6 +6,7 @@ import glob
 from copy import deepcopy
 
 import openai
+import cv2
 import backoff
 from tqdm import tqdm
 import trimesh
@@ -58,19 +59,24 @@ def run(args, temp_path):
     for prompt in lines:
         prompt = prompt.strip()
         try:
-            obj_path = glob.glob(f'outputs_mesh_t3/{args.method}_{args.group}/{prompt.replace(" ", "_")}*/save/it*-export/model.obj')[-1].replace("\'", "\\\'")
+            obj_path = glob.glob(f'outputs_video/{args.method}_{args.group}/{prompt.replace(" ", "_")}/eval.mp4')[-1].replace("\'", "\\\'")
         except IndexError:
-            obj_path = 'outputs_mesh_t3/FALSE_PATH'
-        
-        os.system(f'python render/meshrender_cap.py --path {obj_path} --name {temp_path}')
+            obj_path = 'outputs_video/FALSE_PATH'
+        cap = cv2.VideoCapture(obj_path)
 
+        frame_id = 0
         texts = []
+        while True:
+            ret, frame = cap.read()
+            if not ret: break
 
-        for idx, img_path in enumerate(os.listdir(temp_path)):
-            color = Image.open(os.path.join(temp_path, img_path)).convert("RGB")
+            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)[:, :512]
+            color = Image.open(frame_rgb).convert("RGB")
             image = vis_processors["eval"](color).unsqueeze(0).to(device)
             x = model.generate({"image": image}, use_nucleus_sampling=True, num_captions=1)
             texts += x
+            frame_id += 1
+        cap.release()
     
         prompt_input = 'Given a set of descriptions about the same 3D object, distill these descriptions into one concise caption. The descriptions are as follows:\n\n'
         for idx, txt in enumerate(texts):
