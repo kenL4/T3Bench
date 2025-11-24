@@ -33,7 +33,7 @@ def run(args, temp_path):
             if not ret: break
 
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)[:, :512]
-            color = Image.fromarray(frame_rgb).convert("L")
+            color = Image.fromarray(frame_rgb).convert("L").convert("RGB")
             reward = model.score(prompt, color)
             # For some reason, T3Bench uses -114514 as the default
             scores[frame_id] = max(-114514, reward)
