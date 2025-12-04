@@ -10,7 +10,6 @@ matplotlib
 contexttimer
 decord
 einops
-fairscale==0.4.4
 ftfy
 iopath
 ipython
@@ -29,6 +28,5 @@ scikit-image
 sentencepiece
 spacy
 streamlit
-timm==0.4.12
 webdataset
 clip
