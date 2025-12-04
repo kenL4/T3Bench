@@ -5,6 +5,5 @@ Pillow
 image-reward
 openai
 backoff
-salesforce-lavis
 tqdm
 matplotlib
