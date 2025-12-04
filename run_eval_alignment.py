@@ -13,29 +13,22 @@ openai.api_key = "PLEASE USE YOUR OWN API KEY"
 MODEL = "gpt-4o-mini"
 
 def predict(prompt, temperature, max_retries=10):
-    import time
     for i in range(max_retries):
         try:
-            response = openai.chat.completions.create(
-                model=MODEL,
-                temperature=temperature,
-                messages=[
-                    {"role": "user", "content": prompt}
-                ]
-            )
-            return response.choices[0].message.content
 
-        except openai.RateLimitError as e:
-            # Exponential backoff
+            response = openai.chat.completions.create(model=MODEL,
+                                                        temperature=temperature,
+                                                        messages=[
+                                                            {"role": "user", "content": prompt}
+                                                        ],)
+            return response.choices[0].message.content
+        except Exception as e:
             wait = 2 ** i
-            print(f"Rate limit hit. Waiting {wait} seconds...")
+            print(e)
+            print("Retrying in", wait, "seconds")
             time.sleep(wait)
 
-        except Exception as e:
-            # Other errors → don't retry
-            raise e
-
-    raise RuntimeError("Failed after maximum retries.")
+    raise RuntimeError("Could not distill the captions.")
 
 
 def process_text(text):
