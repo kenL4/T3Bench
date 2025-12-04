@@ -3,6 +3,7 @@
 This is a modified version of T<sup>3</sup>Bench modified to evaluate enhanced GSGEN pipelines.
 
 ### I would highly recommend that you use the provided `T3Bench.jpynb` as the process is fairly complicated and has a lot of strict package requirements
+#### Here is the link for ease of access: <a href="https://colab.research.google.com/drive/1kAapo_9tNeJ66a-Iml6a3C2eWWBZshwF?usp=sharing">T3Bench Colab</a>
 
 If you want to run the benchmark locally, you should follow these steps:
 
