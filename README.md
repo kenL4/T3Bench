@@ -1,72 +1,69 @@
-<img src="https://t3bench.com/static/images/logobig.png" align="center">
-<p align="center">
-    📃 <a href="https://arxiv.org/abs/2310.02977" target="_blank">Paper</a> • 🌐 <a href="https://t3bench.com" target="_blank">Project Page</a>
-</p>
+# T<sup>3</sup>Bench for Enhancer Evaluation
 
-# T<sup>3</sup>Bench: Benchmarking Current Progress in Text-to-3D Generation
+This is a modified version of T<sup>3</sup>Bench modified to evaluate enhanced GSGEN pipelines.
 
-![](fig/A_cactus_with_pink_flowers.gif)
+### I would highly recommend that you use the provided `T3Bench.jpynb` as the process is fairly complicated and has a lot of strict package requirements
 
-**T<sup>3</sup>Bench** is the first comprehensive text-to-3D benchmark containing diverse text prompts of three increasing complexity levels that are specially designed for 3D generation (300 prompts in total). To assess both the subjective quality and the text alignment, we propose two automatic metrics based on multi-view images produced by the 3D contents. The *quality* metric combines multi-view text-image scores and regional convolution to detect quality and view inconsistency. The *alignment* metric uses multi-view captioning and Large Language Model (LLM) evaluation to measure text-3D consistency. Both metrics closely correlate with different dimensions of human judgments, providing a paradigm for efficiently evaluating text-to-3D models.
+If you want to run the benchmark locally, you should follow these steps:
 
-<img src="https://t3bench.com/static/images/pipeline_v2.png">
+#### Environment setup
+The following environment has been found to work well with this program:
+- Python 3.10 (Required)
+- Torch 2.3.0
+- CUDA 12.1
+- C++17 support
 
+#### Install dependencies
 
+**[IMPORTANT]** There is a known [issue](https://github.com/THU-LYJ-Lab/T3Bench/issues/6), where salesforce-lavis and imagereward have directly conflicting package requirements so they are incompatible. The workaround in my fork is to remove salesforce-lavis from the requirements and then install it directly afterwards with `--no-deps` enabled. However, this does mean that we will need to install other packages depending on what script you are running.
 
-## 🔥 Updates
-**[2023/10/24]** We have released mesh results of all prompt sets and methods! Please check <a href="https://drive.google.com/file/d/127Pfy6WI8txJU1DjmdpkR2y8-u5DoPIK/view?usp=share_link">here</a> to download.
-
-
-
-## Evaluate on T<sup>3</sup>Bench
-
-### Environment Setup
-
-We adopt the implementation of <a href="https://github.com/threestudio-project/threestudio">ThreeStudio</a> to test the current text-to-3D methods. Please first follow the instructions of ThreeStudio to setup the generation environment.
-
-Then install the following packages used for evaluation:
-
-```shell
-pip install -r requirements.txt
+Please run the following:
+```
+pip install -r T3Bench/requirements.txt
+pip install tokenizers --no-cache-dir
+pip install fairscale==0.4.4 timm==0.4.12 salesforce-lavis --no-deps
+pip install "transformers<4.56" sacremoses==0.1.0 "tokenizers<0.22" -U --no-deps --no-cache-dir
 ```
 
-Note that we use a slightly modified version of ThreeStudio to ensure efficient generation.
+### How to evaluate a model
+For a given run of a model, save the video file from "gsgen/checkpoints/{prompt}/{date}/{uid}/eval/video" or save the GIF from Wandb and convert it to an MP4.
+1. First, you should replace the prompts in T3Bench/data/prompt_single.txt with the prompts you want to evaluate.
+2. Move the desired video file(s) to "T3Bench/outputs_mesh_t3/gsgen_single/{prompt}/eval.mp4"
 
+#### Evaluate Quality
+Run the following command
+```
+pip install "numpy<2" "huggingface_hub==0.25.2" diffusers transformers opencv-python clip -U
 
-
-### Evaluation
-
-##### Run Text-to-3D and Extract Mesh
-
-```shell
-# YOUR_GROUP: Choose the prompt set to test, including [single, surr, multi]
-# YOUR_METHOD: We now support latentnerf, magic3d, fantasia3d, dreamfusion, sjc, and prolificdreamer.
-python run_t3.py --group YOUR_GROUP --gpu YOUR_GPU --method YOUR_METHOD
-python run_mesh.py --group YOUR_GROUP --gpu YOUR_GPU --method YOUR_METHOD
+cd T3Bench/ && \
+python run_eval_quality.py --group single --gpu 0 --method gsgen
 ```
 
+#### Evaluate Alignment
 
+**[IMPORTANT]**
 
-##### Quality Evaluation
+From here on out, you will need an OpenAI API key, so **please replace the API key in run_caption.py and run_eval_alignment.py**
 
-```shell
-python run_eval_quality.py --group YOUR_GROUP --gpu YOUR_GPU --method YOUR_METHOD
+Run the following command
+```
+pip install decord openai einops --upgrade
+pip install "transformers==4.30.2" "tokenizers<0.14" -U --no-deps --no-cache-dir
+
+rm -rf outputs_caption
+cd T3Bench/ && \
+python3.10 run_caption.py --group single --gpu 0 --method gsgen
+cd T3Bench/ && \
+python run_eval_alignment.py --group single --gpu 0 --method gsgen
 ```
 
-
-
-##### Alignment Evaluation
-
-```shell
-# First get the 3D prompt of the text-to-3D result
-python run_caption.py --group YOUR_GROUP --gpu YOUR_GPU --method YOUR_METHOD
-# then run the LLM Evaluation
-python run_eval_alignment.py --group YOUR_GROUP --gpu YOUR_GPU --method YOUR_METHOD
-```
+If you encounter an issue with VRAM while you do this, you can replace the BLIP2 model type in `run_caption.py`
 
 
 
 ### Citation
+
+Please refer to the original authors instead of my fork
 
 ```
 @misc{he2023t3bench,
@@ -83,4 +80,4 @@ python run_eval_alignment.py --group YOUR_GROUP --gpu YOUR_GPU --method YOUR_MET
 
 ### Acknowledgement
 
-This project could not be possible without the open-source works from <a href="https://github.com/threestudio-project/threestudio">ThreeStudio</a>, <a href="https://github.com/crockwell/Cap3D">Cap3D</a>, <a href="https://github.com/ashawkey/stable-dreamfusion">Stable-DreamFusion</a>, <a href="https://github.com/THUDM/ImageReward">ImageReward</a>, <a href="https://github.com/salesforce/LAVIS">LAVIS</a>. We sincerely thank them all.
+This project is a fork and therefore could not have been possible without the great open source work of T3Bench <a href="https://github.com/THU-LYJ-Lab/T3Bench">T3Bench</a>
