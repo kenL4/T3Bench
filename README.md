@@ -80,4 +80,4 @@ Please refer to the original authors instead of my fork
 
 ### Acknowledgement
 
-This project is a fork and therefore could not have been possible without the great open source work of T3Bench <a href="https://github.com/THU-LYJ-Lab/T3Bench">T3Bench</a>
+This project is a fork and therefore could not have been possible without the great open source work of <a href="https://github.com/THU-LYJ-Lab/T3Bench">T3Bench</a>
